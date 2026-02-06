@@ -8,6 +8,13 @@
         "slopwatch"
       ],
       "rollForward": false
+    },
+    "incrementalist.cmd": {
+      "version": "1.2.0",
+      "commands": [
+        "incrementalist"
+      ],
+      "rollForward": false
     }
   }
 }

@@ -1,0 +1,15 @@
+{
+  "outputFile": "bin/output/incrementalist.txt",
+  "gitBranch": "dev",
+  "verbose": false,
+  "timeoutMinutes": 10,
+  "continueOnError": true,
+  "runInParallel": false,
+  "failOnNoProjects": false,
+  "skip": [
+    "**/Aaron.Akka.Aspire.Hosting.Tests.csproj"
+  ],
+  "target": [
+    "**/*.Tests.csproj"
+  ]
+}

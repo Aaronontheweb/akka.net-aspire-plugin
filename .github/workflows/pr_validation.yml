@@ -44,11 +44,13 @@ jobs:
       - name: "dotnet build"
         run: dotnet build -c Release
 
-      # .NET Framework tests can't run reliably on Linux, so we only do .NET 8
+      - name: "dotnet test (Linux)"
+        if: runner.os == 'Linux'
+        run: dotnet incrementalist run --config .incrementalist/incrementalist.json -- test -c Release
 
-      - name: "dotnet test"
-        shell: bash
-        run: dotnet test -c Release 
+      - name: "dotnet test (Windows)"
+        if: runner.os == 'Windows'
+        run: dotnet incrementalist run --config .incrementalist/testsOnly.json -- test -c Release
 
       - name: "slopwatch"
         run: dotnet slopwatch
