@@ -58,8 +58,11 @@ public static class AkkaAspireExtensions
         builder.WithClustering(clusterOptions);
 
         // Configure Akka.Management HTTP endpoint
+        // hostName must match the discovery target hostname (e.g. "localhost") so the
+        // SelfAwareJoinDecider can identify this node in the discovered contact points.
+        // bindHostname stays "0.0.0.0" to accept connections on all interfaces.
         builder.WithAkkaManagement(
-            hostName: "0.0.0.0",
+            hostName: settings.PublicHostName,
             port: settings.ManagementPort,
             bindHostname: "0.0.0.0",
             bindPort: settings.ManagementPort);
@@ -76,6 +79,18 @@ public static class AkkaAspireExtensions
         // Set the discovery method based on provider type
         var discoveryMethod = DetermineDiscoveryMethod(settings.Clustering?.ProviderType);
         builder.AddHocon($"akka.discovery.method = \"{discoveryMethod}\"", HoconAddMode.Prepend);
+
+        // Inject the management port and hostname into the discovery plugin's config
+        // so each replica registers with its own unique (hostname, port) tuple
+        if (discoveryMethod != "config")
+        {
+            builder.AddHocon(
+                $"akka.discovery.{discoveryMethod}.public-port = {settings.ManagementPort}",
+                HoconAddMode.Prepend);
+            builder.AddHocon(
+                $"akka.discovery.{discoveryMethod}.public-hostname = \"{settings.PublicHostName}\"",
+                HoconAddMode.Prepend);
+        }
 
         // Add health checks
         builder.WithActorSystemLivenessCheck();

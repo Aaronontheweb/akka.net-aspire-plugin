@@ -76,7 +76,7 @@ public class ConfigProviderBootstrapSpecs : global::Akka.Hosting.TestKit.TestKit
     public void Should_configure_management_endpoint()
     {
         var config = Sys.Settings.Config;
-        config.GetString("akka.management.http.hostname").Should().Be("0.0.0.0");
+        config.GetString("akka.management.http.hostname").Should().Be("test-host");
     }
 }
 
