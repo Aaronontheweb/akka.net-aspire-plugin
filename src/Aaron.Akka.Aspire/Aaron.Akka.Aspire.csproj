@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Description>Client-side Akka.NET Aspire cluster bootstrap. Reads Aspire-injected configuration to auto-configure Akka.Remote, Akka.Cluster, Akka.Management, and Cluster Bootstrap.</Description>
+    <PackageTags>$(PackageTags);client;bootstrap</PackageTags>
+    <IsPackable>true</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Akka.Hosting" />
+    <PackageReference Include="Akka.Cluster.Hosting" />
+    <PackageReference Include="Akka.Management" />
+    <PackageReference Include="Akka.Management.Cluster.Bootstrap" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" />
+  </ItemGroup>
+
+</Project>
