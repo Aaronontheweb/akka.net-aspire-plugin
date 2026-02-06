@@ -81,18 +81,6 @@ akka.management.cluster.bootstrap {{
 akka.discovery.method = ""{discoveryMethod}""
 ", HoconAddMode.Prepend);
 
-        // Configure health checks
-        builder.AddHocon(@"
-akka.management.http.health-checks {
-    readiness-checks {
-        cluster-membership = ""Akka.Management.Cluster.ClusterMembershipCheck, Akka.Management.Cluster.Bootstrap""
-    }
-    liveness-checks {
-        cluster-membership = ""Akka.Management.Cluster.ClusterMembershipCheck, Akka.Management.Cluster.Bootstrap""
-    }
-}
-", HoconAddMode.Prepend);
-
         return builder;
     }
 

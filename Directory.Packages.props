@@ -13,7 +13,7 @@
     <PackageVersion Include="Akka.Cluster.Hosting" Version="$(AkkaManagementVersion)" />
     <PackageVersion Include="Akka.Discovery" Version="$(AkkaManagementVersion)" />
     <PackageVersion Include="Akka.Management" Version="$(AkkaManagementVersion)" />
-    <PackageVersion Include="Akka.Management.Cluster.Bootstrap" Version="0.3.0-beta4" />
+
     <PackageVersion Include="Microsoft.Extensions.Configuration" Version="10.0.2" />
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.2" />
   </ItemGroup>
