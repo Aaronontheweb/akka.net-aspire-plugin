@@ -9,6 +9,11 @@
       "ruleId": "SW004",
       "pattern": "**/Aaron.Akka.Aspire.Hosting.Tests/AspireIntegrationSpecs.cs",
       "justification": "Polling interval for cluster formation - not a timing-dependent test"
+    },
+    {
+      "ruleId": "SW003",
+      "pattern": "**/Aaron.Akka.Aspire.Hosting.Tests/AkkaServiceExtensionsSpecs.cs",
+      "justification": "Redis connection string resolution intentionally fails in unit tests without Docker"
     }
   ],
   "globalSuppressions": []

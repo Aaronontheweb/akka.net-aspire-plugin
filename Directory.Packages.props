@@ -12,6 +12,7 @@
     <PackageVersion Include="Akka.Hosting" Version="$(AkkaManagementVersion)" />
     <PackageVersion Include="Akka.Cluster.Hosting" Version="$(AkkaManagementVersion)" />
     <PackageVersion Include="Akka.Discovery" Version="$(AkkaManagementVersion)" />
+    <PackageVersion Include="Akka.Discovery.Azure" Version="$(AkkaManagementVersion)" />
     <PackageVersion Include="Akka.Management" Version="$(AkkaManagementVersion)" />
 
     <PackageVersion Include="Microsoft.Extensions.Configuration" Version="10.0.2" />
@@ -20,6 +21,7 @@
   <!-- Aspire dependencies -->
   <ItemGroup>
     <PackageVersion Include="Aspire.Hosting.AppHost" Version="$(AspireVersion)" />
+    <PackageVersion Include="Aspire.Hosting.Azure.Storage" Version="$(AspireVersion)" />
     <PackageVersion Include="Aspire.Hosting.Redis" Version="$(AspireVersion)" />
     <PackageVersion Include="Aspire.Hosting.Testing" Version="$(AspireVersion)" />
   </ItemGroup>

@@ -266,7 +266,7 @@ public class AkkaAspireExtensionsSpecs
         var callbackInvoked = false;
 
         // Act
-        builder.WithAspireClusterBootstrap(sp, clusterOptions =>
+        builder.WithAspireClusterBootstrap(sp, clusterConfigure: clusterOptions =>
         {
             callbackInvoked = true;
             clusterOptions.Roles = new[] { "test-role" };
@@ -274,5 +274,116 @@ public class AkkaAspireExtensionsSpecs
 
         // Assert - verify callback was invoked
         callbackInvoked.Should().BeTrue();
+    }
+
+    [Fact]
+    public void WithAspireClusterBootstrap_WithDiscoveryCallback_ShouldInvokeCallback()
+    {
+        // Arrange
+        var configDict = new Dictionary<string, string?>
+        {
+            { "Akka:Cluster:Enabled", "true" },
+            { "Akka:Cluster:Clustering:ProviderType", "Redis" },
+            { "ConnectionStrings:akka-discovery", "localhost:6379" }
+        };
+
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(configDict)
+            .Build();
+
+        var services = new ServiceCollection();
+        services.AddSingleton<IConfiguration>(configuration);
+        var sp = services.BuildServiceProvider();
+
+        var builder = new AkkaConfigurationBuilder(services, "TestSystem");
+
+        var callbackInvoked = false;
+        IConfiguration? receivedConfig = null;
+
+        // Act
+        builder.WithAspireClusterBootstrap(sp,
+            configureDiscovery: (b, config) =>
+            {
+                callbackInvoked = true;
+                receivedConfig = config;
+            });
+
+        // Assert
+        callbackInvoked.Should().BeTrue();
+        receivedConfig.Should().NotBeNull();
+        receivedConfig!.GetConnectionString("akka-discovery").Should().Be("localhost:6379");
+    }
+
+    [Fact]
+    public void WithAspireClusterBootstrap_WithNoDiscoveryCallback_ShouldStillSetDiscoveryMethod()
+    {
+        // Arrange
+        var configDict = new Dictionary<string, string?>
+        {
+            { "Akka:Cluster:Enabled", "true" },
+            { "Akka:Cluster:Clustering:ProviderType", "Redis" }
+        };
+
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(configDict)
+            .Build();
+
+        var services = new ServiceCollection();
+        services.AddSingleton<IConfiguration>(configuration);
+        var sp = services.BuildServiceProvider();
+
+        // Build the actor system to verify HOCON configuration
+        var host = new HostBuilder()
+            .ConfigureServices((context, serviceCollection) =>
+            {
+                serviceCollection.AddSingleton<IConfiguration>(configuration);
+                serviceCollection.AddAkka("TestSystem", (akkaBuilder, provider) =>
+                {
+                    // No configureDiscovery callback - backward compat path
+                    akkaBuilder.WithAspireClusterBootstrap(provider);
+                });
+            })
+            .Build();
+
+        var actorSystem = host.Services.GetRequiredService<ActorSystem>();
+
+        // Assert - discovery method should still be set via HOCON fallback
+        var config = actorSystem.Settings.Config;
+        config.GetString("akka.discovery.method").Should().Be("redis");
+
+        // Cleanup
+        host.Dispose();
+    }
+
+    [Fact]
+    public void WithAspireClusterBootstrap_WhenDisabled_ShouldNotInvokeDiscoveryCallback()
+    {
+        // Arrange
+        var configDict = new Dictionary<string, string?>
+        {
+            { "Akka:Cluster:Enabled", "false" }
+        };
+
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(configDict)
+            .Build();
+
+        var services = new ServiceCollection();
+        services.AddSingleton<IConfiguration>(configuration);
+        var sp = services.BuildServiceProvider();
+
+        var builder = new AkkaConfigurationBuilder(services, "TestSystem");
+
+        var callbackInvoked = false;
+
+        // Act
+        builder.WithAspireClusterBootstrap(sp,
+            configureDiscovery: (b, config) =>
+            {
+                callbackInvoked = true;
+            });
+
+        // Assert - callback should NOT be invoked when clustering is disabled
+        callbackInvoked.Should().BeFalse();
     }
 }

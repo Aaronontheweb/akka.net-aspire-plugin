@@ -64,4 +64,10 @@ public class AkkaAspireClusteringSettings
     /// Valid values are: "Redis", "AzureTableStorage", "Kubernetes", "Config".
     /// </summary>
     public string? ProviderType { get; set; }
+
+    /// <summary>
+    /// Gets or sets the connection string name for the discovery backend resource.
+    /// This is injected by the hosting package and corresponds to the Aspire resource name.
+    /// </summary>
+    public string? ConnectionStringName { get; set; }
 }

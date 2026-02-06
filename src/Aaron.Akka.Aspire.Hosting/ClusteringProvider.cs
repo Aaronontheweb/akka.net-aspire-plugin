@@ -35,7 +35,14 @@ internal sealed class ClusteringProvider : IClusteringProvider
         // Inject the connection string reference
         builder.WithReference(_resource);
 
-        // Set the provider type environment variable
-        builder.WithEnvironment("Akka__Cluster__Clustering__ProviderType", _providerType);
+        // Set clustering provider metadata via environment callback
+        // (uses the same callback pattern as AkkaServiceExtensions.WithReference for consistency)
+        var providerType = _providerType;
+        var connectionStringName = _resource.Resource.Name;
+        builder.WithEnvironment(context =>
+        {
+            context.EnvironmentVariables["Akka__Cluster__Clustering__ProviderType"] = providerType;
+            context.EnvironmentVariables["Akka__Cluster__Clustering__ConnectionStringName"] = connectionStringName;
+        });
     }
 }

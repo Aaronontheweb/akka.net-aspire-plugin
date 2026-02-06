@@ -35,7 +35,7 @@ Three NuGet packages that work together:
 Used in the Aspire AppHost project. Provides `AddAkka()`, `WithClustering()`, and `WithReference()` extension methods. Injects environment variables (`Akka__Cluster__*`) and configures `akka-remote` (TCP) and `akka-management` (HTTP) endpoints. Detects replica count from Aspire annotations.
 
 ### `Aaron.Akka.Aspire` (net10.0) - Service side
-Used in application services. `WithAspireClusterBootstrap()` reads `IConfiguration` section `Akka:Cluster` (populated from the environment variables above), then configures Akka.Remote, Akka.Cluster, Akka.Management, and Cluster Bootstrap. Also injects discovery plugin HOCON (`public-hostname`/`public-port`) so each replica registers uniquely. Includes a cluster membership health check.
+Used in application services. `WithAspireClusterBootstrap()` reads `IConfiguration` section `Akka:Cluster` (populated from the environment variables above), then configures Akka.Remote, Akka.Cluster, Akka.Management, and Cluster Bootstrap. Accepts an optional `configureDiscovery` callback `Action<AkkaConfigurationBuilder, IConfiguration>` for wiring the discovery plugin (e.g. `WithRedisDiscovery`, `WithAzureDiscovery`). Also injects discovery plugin HOCON (`public-hostname`/`public-port`) so each replica registers uniquely. Includes a cluster membership health check.
 
 ### `Aaron.Akka.Discovery.Redis` (netstandard2.0;net9.0;net10.0) - Discovery plugin
 Redis-based service discovery for Akka.NET. Each node registers itself in Redis with a heartbeat; other nodes query Redis to find cluster members. Has an embedded `reference.conf`.
@@ -46,12 +46,17 @@ Aspire AppHost (AddAkka + WithClustering + WithReference)
   → environment variables + connection strings injected into service containers
     → AkkaAspireClusterSettings reads IConfiguration("Akka:Cluster")
       → WithAspireClusterBootstrap configures the full Akka cluster stack
+        → configureDiscovery callback wires up the discovery plugin
 ```
+
+### Sample projects
+- **Redis sample** (`samples/Aaron.Akka.Aspire.Sample.*`): Redis discovery via `Aaron.Akka.Discovery.Redis`
+- **Azure sample** (`samples/Aaron.Akka.Aspire.Sample.Azure.*`): Azure Table Storage discovery via `Akka.Discovery.Azure` with Azurite emulator
 
 ## Testing
 
 - **Unit tests** (`Aaron.Akka.Aspire.Tests`, `Aaron.Akka.Discovery.Redis.Tests`): Use `Akka.Hosting.TestKit`. Set `autoStartBootstrap: false` to prevent bootstrap from killing the actor system in tests. Use `global::Akka.Hosting.TestKit.TestKit` to avoid namespace collision with `Aaron.Akka.Hosting`.
-- **Aspire integration tests** (`Aaron.Akka.Aspire.Hosting.Tests/AspireIntegrationSpecs.cs`): Require Docker (Redis container). Use `DistributedApplicationTestingBuilder`. Skipped on Windows CI via incrementalist config.
+- **Aspire integration tests** (`Aaron.Akka.Aspire.Hosting.Tests/AspireIntegrationSpecs.cs`): Require Docker (Redis container). Use `DistributedApplicationTestingBuilder`. Skipped on Windows CI via incrementalist config (Windows GHA runners lack Docker support). **Never skip Docker tests locally or on Linux CI -- always run the full test suite.**
 - **Hosting unit tests** (`Aaron.Akka.Aspire.Hosting.Tests/AkkaServiceExtensionsSpecs.cs`): Test endpoint and environment variable configuration without Docker.
 
 ## Key Technical Details
