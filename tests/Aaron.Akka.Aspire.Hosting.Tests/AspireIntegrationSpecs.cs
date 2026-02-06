@@ -1,4 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using Aspire.Hosting;
 using Aspire.Hosting.Testing;
@@ -7,8 +6,6 @@ using Xunit;
 
 namespace Aaron.Akka.Aspire.Hosting.Tests;
 
-[SuppressMessage("Slopwatch", "SW003", Justification = "Polling loop intentionally retries on transient HTTP failures")]
-[SuppressMessage("Slopwatch", "SW004", Justification = "Polling interval for cluster formation - not a timing-dependent test")]
 public sealed class AspireIntegrationSpecs : IAsyncLifetime
 {
     private DistributedApplication? _app;
