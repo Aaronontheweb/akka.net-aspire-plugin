@@ -1,0 +1,15 @@
+{
+  "suppressions": [
+    {
+      "ruleId": "SW003",
+      "pattern": "**/Aaron.Akka.Aspire.Hosting.Tests/AspireIntegrationSpecs.cs",
+      "justification": "Polling loop intentionally retries on transient HTTP failures during cluster formation"
+    },
+    {
+      "ruleId": "SW004",
+      "pattern": "**/Aaron.Akka.Aspire.Hosting.Tests/AspireIntegrationSpecs.cs",
+      "justification": "Polling interval for cluster formation - not a timing-dependent test"
+    }
+  ],
+  "globalSuppressions": []
+}
