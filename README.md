@@ -1,70 +1,104 @@
-# build-system-template
-Akka.NET project build system template that provides standardized build and CI/CD configuration for all Akka.NET projects.
+# Akka.NET Aspire Plugin
 
-## Build System Overview
-This repository contains our standardized build system setup that can be used across all Akka.NET projects. Here are the key components and practices we follow:
+Automated Akka.NET cluster formation for [.NET Aspire](https://learn.microsoft.com/dotnet/aspire). Configure your cluster topology in the AppHost, and each service replica will automatically discover peers, form a cluster, and report health status.
 
-### CI/CD Configuration
-We primarily use GitHub Actions for our CI/CD pipelines, but also maintain Azure DevOps pipeline examples. You can find the configuration examples in:
-- `.github/workflows/` - GitHub Actions pipeline examples
-- `.azuredevops/` - Azure DevOps pipeline examples
+## Packages
 
-### SDK Version Management
-We use `global.json` to pin the .NET SDK version for both CI/CD environments and local development. This ensures consistent builds across all environments and developers.
+| Package | Target | Description |
+|---------|--------|-------------|
+| `Aaron.Akka.Aspire.Hosting` | net10.0 | AppHost-side: `AddAkka()`, `WithClustering()`, `WithReference()` |
+| `Aaron.Akka.Aspire` | net10.0 | Service-side: `WithAspireClusterBootstrap()` reads Aspire-injected config |
+| `Aaron.Akka.Discovery.Redis` | netstandard2.0; net9.0; net10.0 | Redis-based service discovery plugin |
 
-### .NET Tools
-We use local .NET tools to enhance our build and documentation process. The tools are configured in `.config/dotnet-tools.json` and include:
+## Usage
 
-- [Incrementalist](https://github.com/petabridge/Incrementalist) (v1.0.0-beta4) - Used for determining which projects need to be rebuilt based on Git changes
-- [DocFx](https://dotnet.github.io/docfx/) (v2.78.3) - Used for generating documentation
+### AppHost
 
-To restore these tools in your local environment, run:
-```powershell
+```csharp
+using Aaron.Akka.Aspire.Hosting;
+
+var builder = DistributedApplication.CreateBuilder(args);
+
+var redis = builder.AddRedis("akka-discovery");
+
+var akka = builder.AddAkka("my-cluster")
+    .WithClustering(redis);
+
+builder.AddProject<Projects.MyService>("service")
+    .WithHttpEndpoint(name: "http")
+    .WithReplicas(3)
+    .WithReference(akka);
+
+builder.Build().Run();
+```
+
+### Service
+
+```csharp
+using Aaron.Akka.Aspire;
+using Aaron.Akka.Discovery.Redis;
+
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddAkka("MySystem", (akkaBuilder, sp) =>
+{
+    var config = sp.GetRequiredService<IConfiguration>();
+    var redisConn = config.GetConnectionString("akka-discovery");
+    var serviceName = config["Akka:Cluster:ServiceName"];
+
+    if (!string.IsNullOrEmpty(redisConn))
+        akkaBuilder.WithRedisDiscovery(redisConn, serviceName);
+
+    akkaBuilder.WithAspireClusterBootstrap(sp);
+});
+
+builder.Services.AddHealthChecks();
+var app = builder.Build();
+
+app.MapHealthChecks("/healthz");
+app.MapGet("/", () => "Hello from Akka.NET!");
+app.Run();
+```
+
+`WithAspireClusterBootstrap` configures Akka.Remote, Akka.Cluster, Akka.Management, Cluster Bootstrap, and health checks from the environment variables that the hosting package injects. No manual HOCON needed.
+
+## How It Works
+
+The hosting package (`WithReference(akka)`) injects environment variables into each service replica:
+
+- `Akka__Cluster__Enabled` - enables clustering
+- `Akka__Cluster__RemotePort` / `Akka__Cluster__ManagementPort` - unique ports per replica
+- `Akka__Cluster__PublicHostName` / `Akka__Cluster__ServiceName` - discovery identity
+- `Akka__Cluster__RequiredContactPointsNr` - derived from replica count
+- Connection string for the discovery backend (e.g. Redis)
+
+The service-side bootstrap reads these via `IConfiguration`, configures the full Akka.NET cluster stack, and uses the discovery plugin to find other replicas. Cluster Bootstrap's `SelfAwareJoinDecider` handles initial seed node election.
+
+## Supported Discovery Providers
+
+- **Redis** (`Aaron.Akka.Discovery.Redis`) - each node registers in Redis with a heartbeat
+- **Azure Table Storage** - via `Akka.Discovery.Azure`
+- **Kubernetes** - via `Akka.Discovery.KubernetesApi`
+- **Config** - static seed nodes (default fallback)
+
+## Learn More
+
+- [Akka.NET Clustering](https://getakka.net/articles/clustering/cluster-overview.html) - how Akka.NET clusters work, membership lifecycle, and seed node discovery
+- [Akka.Management](https://github.com/akkadotnet/Akka.Management) - HTTP management endpoint and Cluster Bootstrap for automated cluster formation
+- [Akka.Hosting](https://github.com/akkadotnet/Akka.Hosting) - `IServiceCollection` integration for configuring Akka.NET without raw HOCON
+- [.NET Aspire](https://aspire.dev/get-started/what-is-aspire/) - orchestration, service discovery, and telemetry for distributed .NET apps
+
+## Building
+
+```bash
 dotnet tool restore
+dotnet build -c Release
+dotnet test -c Release
+dotnet pack -c Release -o ./bin/nuget
 ```
 
-This command is automatically executed in our CI/CD pipelines (both GitHub Actions and Azure DevOps) to ensure tools are available during builds.
+Integration tests require Docker (they spin up a Redis container via Aspire).
 
-### Centralized Package and Build Management
-We utilize two key MSBuild files for centralized configuration:
+## License
 
-1. `Directory.Packages.props` - Implements [Central Package Version Management](https://learn.microsoft.com/nuget/consume-packages/Central-Package-Management) for consistent NuGet package versions across all projects in the solution.
-
-2. `Directory.Build.props` - Defines common build properties, including:
-   - Copyright and author information
-   - Source linking configuration
-   - NuGet package metadata
-   - Common compiler settings
-   - Target framework definitions
-
-### Code Coverage Configuration
-The `coverlet.runsettings` file configures code coverage collection using Coverlet, with settings for:
-- Multiple coverage report formats (JSON, Cobertura, LCOV, TeamCity, OpenCover)
-- Test assembly exclusions
-- Source linking integration
-- Performance optimizations
-
-### Release Management
-Our release process is streamlined through:
-- `RELEASE_NOTES.md` - Contains version history and release notes
-- `build.ps1` - PowerShell script that processes release notes and updates version information
-- Supporting scripts in `/scripts`:
-  - `bumpVersion.ps1` - Updates version numbers
-  - `getReleaseNotes.ps1` - Parses release notes
-
-The build system primarily relies on standard `dotnet` CLI commands, with the PowerShell scripts mainly handling release note processing and version management.
-
-### Solution Format
-We prefer the new `.slnx` XML-based solution format over the traditional `.sln` format. This requires .NET 9 SDK or later. The new format is more concise and easier to work with. You can migrate existing solutions using:
-
-```powershell
-dotnet sln migrate
-```
-
-For more information about the new `.slnx` format, see the [official announcement](https://devblogs.microsoft.com/dotnet/introducing-slnx-support-dotnet-cli/).
-
-## Getting Started
-1. Ensure you have the correct .NET SDK version installed (check `global.json`)
-2. Clone this repository
-3. Run `dotnet build` to verify the build system
-4. Customize the configuration files for your specific project needs
+Apache-2.0
