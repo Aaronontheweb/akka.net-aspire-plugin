@@ -12,10 +12,12 @@
     <PackageReference Include="FluentAssertions" />
     <PackageReference Include="Aspire.Hosting.AppHost" />
     <PackageReference Include="Aspire.Hosting.Redis" />
+    <PackageReference Include="Aspire.Hosting.Testing" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Aaron.Akka.Aspire.Hosting\Aaron.Akka.Aspire.Hosting.csproj" />
+    <ProjectReference Include="..\..\samples\Aaron.Akka.Aspire.Sample.AppHost\Aaron.Akka.Aspire.Sample.AppHost.csproj" IsAspireProjectResource="false" />
   </ItemGroup>
 
 </Project>

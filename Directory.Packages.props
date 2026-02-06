@@ -37,6 +37,7 @@
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
     <PackageVersion Include="FluentAssertions" Version="8.8.0" />
     <PackageVersion Include="Akka.TestKit.Xunit2" Version="$(AkkaManagementVersion)" />
+    <PackageVersion Include="Akka.Hosting.TestKit" Version="$(AkkaManagementVersion)" />
   </ItemGroup>
   <!-- SourceLink support -->
   <ItemGroup>
