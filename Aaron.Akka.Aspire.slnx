@@ -19,6 +19,8 @@
   </Folder>
   <Folder Name="/samples/">
     <Project Path="samples/Aaron.Akka.Aspire.Sample.AppHost/Aaron.Akka.Aspire.Sample.AppHost.csproj" />
+    <Project Path="samples/Aaron.Akka.Aspire.Sample.Azure.AppHost/Aaron.Akka.Aspire.Sample.Azure.AppHost.csproj" />
+    <Project Path="samples/Aaron.Akka.Aspire.Sample.Azure.Service/Aaron.Akka.Aspire.Sample.Azure.Service.csproj" />
     <Project Path="samples/Aaron.Akka.Aspire.Sample.Service/Aaron.Akka.Aspire.Sample.Service.csproj" />
   </Folder>
 </Solution>

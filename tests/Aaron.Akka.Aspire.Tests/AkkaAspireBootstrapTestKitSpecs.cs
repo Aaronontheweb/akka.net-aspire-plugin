@@ -135,10 +135,11 @@ public class CustomClusterOptionsSpecs : global::Akka.Hosting.TestKit.TestKit
 
     protected override void ConfigureAkka(AkkaConfigurationBuilder builder, IServiceProvider provider)
     {
-        builder.WithAspireClusterBootstrap(provider, cluster =>
-        {
-            cluster.Roles = ["test-role", "worker"];
-        }, autoStartBootstrap: false);
+        builder.WithAspireClusterBootstrap(provider,
+            clusterConfigure: cluster =>
+            {
+                cluster.Roles = ["test-role", "worker"];
+            }, autoStartBootstrap: false);
     }
 
     [Fact]

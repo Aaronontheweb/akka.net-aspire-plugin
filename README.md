@@ -32,7 +32,7 @@ builder.AddProject<Projects.MyService>("service")
 builder.Build().Run();
 ```
 
-### Service
+### Service (Redis Discovery)
 
 ```csharp
 using Aaron.Akka.Aspire;
@@ -42,14 +42,14 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddAkka("MySystem", (akkaBuilder, sp) =>
 {
-    var config = sp.GetRequiredService<IConfiguration>();
-    var redisConn = config.GetConnectionString("akka-discovery");
-    var serviceName = config["Akka:Cluster:ServiceName"];
-
-    if (!string.IsNullOrEmpty(redisConn))
-        akkaBuilder.WithRedisDiscovery(redisConn, serviceName);
-
-    akkaBuilder.WithAspireClusterBootstrap(sp);
+    akkaBuilder.WithAspireClusterBootstrap(sp,
+        configureDiscovery: (b, config) =>
+        {
+            var redisConn = config.GetConnectionString("akka-discovery");
+            if (!string.IsNullOrEmpty(redisConn))
+                b.WithRedisDiscovery(redisConn, config["Akka:Cluster:ServiceName"]);
+        },
+        clusterConfigure: c => c.Roles = ["my-service"]);
 });
 
 builder.Services.AddHealthChecks();
@@ -60,7 +60,7 @@ app.MapGet("/", () => "Hello from Akka.NET!");
 app.Run();
 ```
 
-`WithAspireClusterBootstrap` configures Akka.Remote, Akka.Cluster, Akka.Management, Cluster Bootstrap, and health checks from the environment variables that the hosting package injects. No manual HOCON needed.
+`WithAspireClusterBootstrap` configures Akka.Remote, Akka.Cluster, Akka.Management, Cluster Bootstrap, and health checks from the environment variables that the hosting package injects. The `configureDiscovery` callback wires up the discovery plugin using the same `IConfiguration` that Aspire populates. No manual HOCON needed.
 
 ## How It Works
 
@@ -80,6 +80,47 @@ The service-side bootstrap reads these via `IConfiguration`, configures the full
 - **Azure Table Storage** - via `Akka.Discovery.Azure`
 - **Kubernetes** - via `Akka.Discovery.KubernetesApi`
 - **Config** - static seed nodes (default fallback)
+
+## Production Deployment
+
+The `configureDiscovery` callback makes it straightforward to swap discovery providers between environments. Only the AppHost and the callback change -- the rest of the service code stays identical.
+
+### Azure Table Storage (local dev with Azurite, production with real Azure)
+
+**AppHost:**
+```csharp
+var storage = builder.AddAzureStorage("azure-storage").RunAsEmulator();
+var tables = storage.AddTables("akka-discovery");
+
+var akka = builder.AddAkka("my-cluster")
+    .WithClustering(tables);
+```
+
+**Service:**
+```csharp
+akkaBuilder.WithAspireClusterBootstrap(sp,
+    configureDiscovery: (b, config) =>
+    {
+        var azureConn = config.GetConnectionString("akka-discovery");
+        if (!string.IsNullOrEmpty(azureConn))
+            b.WithAzureDiscovery(azureConn, config["Akka:Cluster:ServiceName"]);
+    },
+    clusterConfigure: c => c.Roles = ["my-service"]);
+```
+
+### Kubernetes (no connection string needed)
+
+**Service:**
+```csharp
+akkaBuilder.WithAspireClusterBootstrap(sp,
+    configureDiscovery: (b, config) =>
+    {
+        b.WithKubernetesDiscovery();
+    },
+    clusterConfigure: c => c.Roles = ["my-service"]);
+```
+
+See the `samples/` directory for complete working examples with Redis and Azure Table Storage.
 
 ## Learn More
 

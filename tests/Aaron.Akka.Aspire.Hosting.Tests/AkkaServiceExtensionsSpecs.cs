@@ -285,4 +285,42 @@ public class AkkaServiceExtensionsSpecs
         var envCallbacks = containerResource.Resource.Annotations.OfType<EnvironmentCallbackAnnotation>();
         envCallbacks.Should().NotBeEmpty("because clustering provider should add environment callbacks");
     }
+
+    [Fact]
+    public async Task ClusteringProvider_ShouldInjectConnectionStringName()
+    {
+        // Arrange
+        var appBuilder = DistributedApplication.CreateBuilder();
+        var akkaService = appBuilder.AddAkka("my-akka-cluster");
+        var redis = appBuilder.AddRedis("my-redis");
+        akkaService.WithClustering(redis);
+
+        var containerResource = appBuilder.AddContainer("test-container", "test-image");
+
+        // Act
+        containerResource.WithReference(akkaService);
+
+        // Run all env callbacks. The Redis WithReference callback throws during
+        // connection string resolution in unit tests - we filter those failures
+        // since we only need to verify ClusteringProvider's own env vars.
+        var executionContext = new DistributedApplicationExecutionContext(DistributedApplicationOperation.Run);
+        var envContext = new EnvironmentCallbackContext(executionContext);
+        var envCallbacks = containerResource.Resource.Annotations
+            .OfType<EnvironmentCallbackAnnotation>()
+            .ToList();
+
+        var tasks = envCallbacks.Select(async cb =>
+        {
+            try { await cb.Callback(envContext); }
+            catch (InvalidOperationException) { /* Redis connection string not resolvable in unit test */ }
+        });
+        await Task.WhenAll(tasks);
+
+        // Assert - clustering provider should inject the connection string name
+        envContext.EnvironmentVariables.Should().ContainKey("Akka__Cluster__Clustering__ProviderType");
+        envContext.EnvironmentVariables["Akka__Cluster__Clustering__ProviderType"].Should().Be("Redis");
+
+        envContext.EnvironmentVariables.Should().ContainKey("Akka__Cluster__Clustering__ConnectionStringName");
+        envContext.EnvironmentVariables["Akka__Cluster__Clustering__ConnectionStringName"].Should().Be("my-redis");
+    }
 }

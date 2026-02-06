@@ -22,6 +22,10 @@ public static class AkkaAspireExtensions
     /// </summary>
     /// <param name="builder">The Akka configuration builder.</param>
     /// <param name="sp">The service provider for accessing IConfiguration.</param>
+    /// <param name="configureDiscovery">Optional callback to configure the service discovery plugin.
+    /// Receives the Akka configuration builder and the application's <see cref="IConfiguration"/>.
+    /// Use this to call discovery extension methods like <c>WithRedisDiscovery</c> or <c>WithAzureDiscovery</c>.
+    /// When provided, the discovery plugin's <c>IsDefaultPlugin = true</c> will set <c>akka.discovery.method</c> automatically.</param>
     /// <param name="clusterConfigure">Optional callback to customize cluster options.</param>
     /// <param name="autoStartBootstrap">Whether to automatically start Cluster Bootstrap on actor system startup.
     /// Set to false for testing scenarios where you want to control bootstrap lifecycle manually.</param>
@@ -29,6 +33,7 @@ public static class AkkaAspireExtensions
     public static AkkaConfigurationBuilder WithAspireClusterBootstrap(
         this AkkaConfigurationBuilder builder,
         IServiceProvider sp,
+        Action<AkkaConfigurationBuilder, IConfiguration>? configureDiscovery = null,
         Action<ClusterOptions>? clusterConfigure = null,
         bool autoStartBootstrap = true)
     {
@@ -76,12 +81,24 @@ public static class AkkaAspireExtensions
             options.ContactPoint.FilterOnFallbackPort = settings.FilterOnFallbackPort;
         }, autoStart: autoStartBootstrap);
 
-        // Set the discovery method based on provider type
+        // Let the caller configure their discovery plugin
+        configureDiscovery?.Invoke(builder, configuration);
+
+        // Determine the discovery method for HOCON injection
         var discoveryMethod = DetermineDiscoveryMethod(settings.Clustering?.ProviderType);
-        builder.AddHocon($"akka.discovery.method = \"{discoveryMethod}\"", HoconAddMode.Prepend);
+
+        // If no configureDiscovery callback was provided, set akka.discovery.method via HOCON
+        // (backward compat for manual HOCON-based discovery or auto-detected provider type).
+        // When a callback is provided, the discovery plugin's With*Discovery() call sets this
+        // via IsDefaultPlugin = true.
+        if (configureDiscovery is null)
+        {
+            builder.AddHocon($"akka.discovery.method = \"{discoveryMethod}\"", HoconAddMode.Prepend);
+        }
 
         // Inject the management port and hostname into the discovery plugin's config
-        // so each replica registers with its own unique (hostname, port) tuple
+        // so each replica registers with its own unique (hostname, port) tuple.
+        // This override layer must win over whatever the plugin sets.
         if (discoveryMethod != "config")
         {
             builder.AddHocon(

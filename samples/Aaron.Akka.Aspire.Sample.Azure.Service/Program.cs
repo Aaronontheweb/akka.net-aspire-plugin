@@ -1,5 +1,5 @@
 using Aaron.Akka.Aspire;
-using Aaron.Akka.Discovery.Redis;
+using Akka.Discovery.Azure;
 using Akka.Hosting;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using OpenTelemetry;
@@ -40,9 +40,9 @@ builder.Services.AddAkka("SampleSystem", (akkaBuilder, sp) =>
     akkaBuilder.WithAspireClusterBootstrap(sp,
         configureDiscovery: (b, config) =>
         {
-            var redisConn = config.GetConnectionString("akka-discovery");
-            if (!string.IsNullOrEmpty(redisConn))
-                b.WithRedisDiscovery(redisConn, config["Akka:Cluster:ServiceName"]);
+            var azureConn = config.GetConnectionString("akka-discovery");
+            if (!string.IsNullOrEmpty(azureConn))
+                b.WithAzureDiscovery(azureConn, config["Akka:Cluster:ServiceName"]);
         },
         clusterConfigure: c => c.Roles = ["sample"]);
 });
@@ -54,6 +54,6 @@ var app = builder.Build();
 app.MapHealthChecks("/healthz");
 app.MapHealthChecks("/healthz/live", new HealthCheckOptions { Predicate = c => c.Tags.Contains("liveness") });
 app.MapHealthChecks("/healthz/ready", new HealthCheckOptions { Predicate = c => c.Tags.Contains("readiness") });
-app.MapGet("/", () => "Hello from Akka.NET Aspire Sample!");
+app.MapGet("/", () => "Hello from Akka.NET Aspire Azure Sample!");
 
 app.Run();
