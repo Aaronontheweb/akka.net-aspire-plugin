@@ -50,5 +50,8 @@ jobs:
         shell: bash
         run: dotnet test -c Release 
 
+      - name: "slopwatch"
+        run: dotnet slopwatch
+
       - name: "dotnet pack"
         run: dotnet pack -c Release -o ./bin/nuget
