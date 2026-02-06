@@ -70,15 +70,17 @@ The hosting package (`WithReference(akka)`) injects environment variables into e
 - `Akka__Cluster__RemotePort` / `Akka__Cluster__ManagementPort` - unique ports per replica
 - `Akka__Cluster__PublicHostName` / `Akka__Cluster__ServiceName` - discovery identity
 - `Akka__Cluster__RequiredContactPointsNr` - derived from replica count
-- Connection string for the discovery backend (e.g. Redis)
+- `Akka__Cluster__Clustering__ProviderType` - auto-detected from the resource type (e.g. `Redis`, `AzureTableStorage`)
+- `Akka__Cluster__Clustering__ConnectionStringName` - the Aspire resource name for the discovery backend
+- Connection string for the discovery backend (e.g. `ConnectionStrings__akka-discovery`)
 
 The service-side bootstrap reads these via `IConfiguration`, configures the full Akka.NET cluster stack, and uses the discovery plugin to find other replicas. Cluster Bootstrap's `SelfAwareJoinDecider` handles initial seed node election.
 
 ## Supported Discovery Providers
 
-- **Redis** (`Aaron.Akka.Discovery.Redis`) - each node registers in Redis with a heartbeat
-- **Azure Table Storage** - via `Akka.Discovery.Azure`
-- **Kubernetes** - via `Akka.Discovery.KubernetesApi`
+- **Redis** ([`Aaron.Akka.Discovery.Redis`](https://www.nuget.org/packages/Aaron.Akka.Discovery.Redis)) - each node registers in Redis with a heartbeat
+- **Azure Table Storage** ([`Akka.Discovery.Azure`](https://www.nuget.org/packages/Akka.Discovery.Azure)) - uses Azure Table Storage for node registration
+- **Kubernetes** ([`Akka.Discovery.KubernetesApi`](https://www.nuget.org/packages/Akka.Discovery.KubernetesApi)) - queries the Kubernetes API for pod endpoints
 - **Config** - static seed nodes (default fallback)
 
 ## Production Deployment
