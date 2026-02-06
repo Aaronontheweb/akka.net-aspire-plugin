@@ -2,17 +2,10 @@
   "version": 1,
   "isRoot": true,
   "tools": {
-    "incrementalist.cmd": {
-      "version": "1.2.0",
+    "slopwatch.cmd": {
+      "version": "0.3.3",
       "commands": [
-        "incrementalist"
-      ],
-      "rollForward": false
-    },
-    "docfx": {
-      "version": "2.78.3",
-      "commands": [
-        "docfx"
+        "slopwatch"
       ],
       "rollForward": false
     }

@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "createdAt": "2026-02-06T04:40:07.856236+00:00",
+  "updatedAt": "2026-02-06T04:40:07.8648147+00:00",
+  "description": "Initial baseline created by 'slopwatch init' on 2026-02-06 04:40:07 UTC",
+  "entries": [
+    {
+      "hash": "9d4a53dc5193e639",
+      "ruleId": "SW005",
+      "filePath": "Directory.Build.props",
+      "lineNumber": 6,
+      "codeSnippet": "<NoWarn>$(NoWarn);CS1591</NoWarn>",
+      "message": "Adding warnings to NoWarn: CS1591",
+      "baselinedAt": "2026-02-06T04:40:07.8645684+00:00"
+    },
+    {
+      "hash": "cb7ced6ec6193f27",
+      "ruleId": "SW004",
+      "filePath": "tests/Aaron.Akka.Aspire.Hosting.Tests/AspireIntegrationSpecs.cs",
+      "lineNumber": 46,
+      "codeSnippet": "Task.Delay(500, cts.Token)",
+      "message": "Test uses Task.Delay(500) which may indicate a timing-dependent test",
+      "baselinedAt": "2026-02-06T04:40:07.864814+00:00"
+    }
+  ]
+}

@@ -37,6 +37,9 @@ jobs:
       run: |
         ./build.ps1
 
+    - name: "slopwatch"
+      run: dotnet slopwatch
+
     - name: Create Packages
       run:  dotnet pack /p:PackageVersion=${{ github.ref_name }} -c Release -o ./output
 
