@@ -6,6 +6,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Akka.Hosting" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\src\Aaron.Akka.Aspire\Aaron.Akka.Aspire.csproj" />
     <ProjectReference Include="..\..\src\Aaron.Akka.Discovery.Redis\Aaron.Akka.Discovery.Redis.csproj" />
   </ItemGroup>

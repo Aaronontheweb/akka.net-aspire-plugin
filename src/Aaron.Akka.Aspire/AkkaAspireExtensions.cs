@@ -1,7 +1,12 @@
+using Akka.Cluster;
 using Akka.Cluster.Hosting;
 using Akka.Hosting;
+using Akka.Management;
+using Akka.Management.Cluster.Bootstrap;
+using Akka.Remote.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 namespace Aaron.Akka.Aspire;
 
@@ -18,11 +23,14 @@ public static class AkkaAspireExtensions
     /// <param name="builder">The Akka configuration builder.</param>
     /// <param name="sp">The service provider for accessing IConfiguration.</param>
     /// <param name="clusterConfigure">Optional callback to customize cluster options.</param>
+    /// <param name="autoStartBootstrap">Whether to automatically start Cluster Bootstrap on actor system startup.
+    /// Set to false for testing scenarios where you want to control bootstrap lifecycle manually.</param>
     /// <returns>The Akka configuration builder for method chaining.</returns>
     public static AkkaConfigurationBuilder WithAspireClusterBootstrap(
         this AkkaConfigurationBuilder builder,
         IServiceProvider sp,
-        Action<ClusterOptions>? clusterConfigure = null)
+        Action<ClusterOptions>? clusterConfigure = null,
+        bool autoStartBootstrap = true)
     {
         var configuration = sp.GetRequiredService<IConfiguration>();
         var settings = new AkkaAspireClusterSettings();
@@ -35,13 +43,11 @@ public static class AkkaAspireExtensions
         }
 
         // Configure Akka.Remote
-        builder.AddHocon($@"
-akka.remote.dot-netty.tcp {{
-    hostname = ""0.0.0.0""
-    port = {settings.RemotePort}
-    public-hostname = ""{settings.PublicHostName}""
-    public-port = {settings.RemotePort}
-}}", HoconAddMode.Prepend);
+        builder.WithRemoting(
+            hostname: "0.0.0.0",
+            port: settings.RemotePort,
+            publicHostname: settings.PublicHostName,
+            publicPort: settings.RemotePort);
 
         // Configure Akka.Cluster with empty seed nodes (bootstrap will handle discovery)
         var clusterOptions = new ClusterOptions
@@ -52,36 +58,58 @@ akka.remote.dot-netty.tcp {{
         builder.WithClustering(clusterOptions);
 
         // Configure Akka.Management HTTP endpoint
-        builder.AddHocon($@"
-akka.management {{
-    http {{
-        hostname = ""0.0.0.0""
-        port = {settings.ManagementPort}
-        bind-hostname = ""0.0.0.0""
-        bind-port = {settings.ManagementPort}
-    }}
-}}", HoconAddMode.Prepend);
+        builder.WithAkkaManagement(
+            hostName: "0.0.0.0",
+            port: settings.ManagementPort,
+            bindHostname: "0.0.0.0",
+            bindPort: settings.ManagementPort);
 
         // Configure Cluster Bootstrap
-        builder.AddHocon($@"
-akka.management.cluster.bootstrap {{
-    contact-point-discovery {{
-        required-contact-point-nr = {settings.RequiredContactPointsNr}
-        service-name = ""{settings.ServiceName}""
-        stable-margin = 5s
-    }}
-    contact-point {{
-        filter-on-fallback-port = {settings.FilterOnFallbackPort.ToString().ToLowerInvariant()}
-    }}
-}}", HoconAddMode.Prepend);
+        builder.WithClusterBootstrap(options =>
+        {
+            options.ContactPointDiscovery.ServiceName = settings.ServiceName;
+            options.ContactPointDiscovery.RequiredContactPointsNr = settings.RequiredContactPointsNr;
+            options.ContactPointDiscovery.StableMargin = TimeSpan.FromSeconds(5);
+            options.ContactPoint.FilterOnFallbackPort = settings.FilterOnFallbackPort;
+        }, autoStart: autoStartBootstrap);
 
-        // Determine discovery method from provider type
+        // Set the discovery method based on provider type
         var discoveryMethod = DetermineDiscoveryMethod(settings.Clustering?.ProviderType);
-        builder.AddHocon($@"
-akka.discovery.method = ""{discoveryMethod}""
-", HoconAddMode.Prepend);
+        builder.AddHocon($"akka.discovery.method = \"{discoveryMethod}\"", HoconAddMode.Prepend);
+
+        // Add health checks
+        builder.WithActorSystemLivenessCheck();
+        builder.WithClusterMembershipCheck();
 
         return builder;
+    }
+
+    /// <summary>
+    /// Adds a health check that reports the cluster membership status of this node.
+    /// Reports Healthy when Up, Degraded when Joining/WeaklyUp, Unhealthy otherwise.
+    /// </summary>
+    /// <param name="builder">The Akka configuration builder.</param>
+    /// <param name="failureStatus">The health status to report on failure.</param>
+    /// <param name="tags">Optional tags for the health check.</param>
+    /// <returns>The Akka configuration builder for method chaining.</returns>
+    public static AkkaConfigurationBuilder WithClusterMembershipCheck(
+        this AkkaConfigurationBuilder builder,
+        HealthStatus? failureStatus = null,
+        IEnumerable<string>? tags = null)
+    {
+        return builder.WithHealthCheck("akka-cluster-membership", (system, _, _) =>
+        {
+            var cluster = Cluster.Get(system);
+            var status = cluster.SelfMember.Status;
+
+            if (status == MemberStatus.Up)
+                return Task.FromResult(HealthCheckResult.Healthy($"Cluster member status: {status}"));
+
+            if (status is MemberStatus.Joining or MemberStatus.WeaklyUp)
+                return Task.FromResult(HealthCheckResult.Degraded($"Cluster member status: {status}"));
+
+            return Task.FromResult(HealthCheckResult.Unhealthy($"Cluster member status: {status}"));
+        }, failureStatus, tags);
     }
 
     private static string DetermineDiscoveryMethod(string? providerType)

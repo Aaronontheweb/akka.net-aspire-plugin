@@ -65,14 +65,13 @@ public static class AkkaServiceExtensions
             isExternal: false,
             protocol: ProtocolType.Tcp);
 
-        // Add TCP endpoint for Akka.Management
+        // Add HTTP endpoint for Akka.Management (used by cluster bootstrap for contact point probing)
         builder.WithEndpoint(
             name: "akka-management",
-            scheme: "tcp",
+            scheme: "http",
             env: "Akka__Cluster__ManagementPort",
             isProxied: true,
-            isExternal: false,
-            protocol: ProtocolType.Tcp);
+            isExternal: false);
 
         // Configure environment variables
         builder.WithEnvironment(context =>

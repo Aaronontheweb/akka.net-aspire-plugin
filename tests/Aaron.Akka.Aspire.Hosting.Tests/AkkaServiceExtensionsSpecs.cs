@@ -131,7 +131,7 @@ public class AkkaServiceExtensionsSpecs
         remoteEndpoint.IsExternal.Should().BeFalse();
 
         var managementEndpoint = endpoints.First(e => e.Name == "akka-management");
-        managementEndpoint.UriScheme.Should().Be("tcp");
+        managementEndpoint.UriScheme.Should().Be("http");
         managementEndpoint.IsProxied.Should().BeTrue();
         managementEndpoint.IsExternal.Should().BeFalse();
 
