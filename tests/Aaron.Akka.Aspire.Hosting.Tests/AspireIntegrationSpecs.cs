@@ -26,33 +26,34 @@ public sealed class AspireIntegrationSpecs : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Service_should_start_with_health_checks_responding()
+    public async Task Service_should_form_cluster_with_healthy_status()
     {
         var endpoint = _app!.GetEndpoint("service", "http");
         using var client = new HttpClient { BaseAddress = endpoint };
 
-        // Retry until the health check endpoint responds (service may need time to bind its HTTP port)
-        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+        // Poll /healthz until it returns 200, proving the cluster has formed
+        // (the akka-cluster-membership health check only returns Healthy when MemberStatus == Up)
+        using var cts = new CancellationTokenSource(TimeSpan.FromMinutes(2));
         HttpResponseMessage? response = null;
         while (!cts.Token.IsCancellationRequested)
         {
             try
             {
                 response = await client.GetAsync("/healthz", cts.Token);
-                break;
+                if (response.StatusCode == HttpStatusCode.OK)
+                    break;
             }
             catch (HttpRequestException) when (!cts.Token.IsCancellationRequested)
             {
-                await Task.Delay(500, cts.Token);
+                // Service may not be ready yet
             }
+
+            await Task.Delay(1000, cts.Token);
         }
 
         response.Should().NotBeNull();
-
-        // The health check endpoint should respond - it may return 503 (ServiceUnavailable) because
-        // the akka-cluster-membership check reports unhealthy until the cluster fully forms.
-        // Both 200 and 503 confirm the health check infrastructure is working correctly.
-        response!.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.ServiceUnavailable);
+        response!.StatusCode.Should().Be(HttpStatusCode.OK,
+            "health check should return 200 once the cluster has formed and member status is Up");
     }
 
     [Fact]

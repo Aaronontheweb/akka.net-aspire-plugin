@@ -94,13 +94,17 @@ public class AkkaAspireExtensionsSpecs
         config.GetInt("akka.remote.dot-netty.tcp.public-port").Should().Be(8081);
 
         // Verify management configuration
-        config.GetString("akka.management.http.hostname").Should().Be("0.0.0.0");
+        config.GetString("akka.management.http.hostname").Should().Be("localhost");
         config.GetInt("akka.management.http.port").Should().Be(8558);
 
         // Verify cluster bootstrap configuration
         config.GetInt("akka.management.cluster.bootstrap.contact-point-discovery.required-contact-point-nr").Should().Be(2);
         config.GetString("akka.management.cluster.bootstrap.contact-point-discovery.service-name").Should().Be("test-service");
         config.GetBoolean("akka.management.cluster.bootstrap.contact-point.filter-on-fallback-port").Should().BeFalse();
+
+        // Verify discovery plugin hostname/port injection
+        config.GetString("akka.discovery.redis.public-hostname").Should().Be("localhost");
+        config.GetInt("akka.discovery.redis.public-port").Should().Be(8558);
 
         // Cleanup
         host.Dispose();

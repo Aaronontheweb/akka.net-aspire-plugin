@@ -2,11 +2,41 @@ using Aaron.Akka.Aspire;
 using Aaron.Akka.Discovery.Redis;
 using Akka.Hosting;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using OpenTelemetry;
+using OpenTelemetry.Logs;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Trace;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// OpenTelemetry - ships logs, traces, and metrics to the Aspire dashboard
+builder.Logging.AddOpenTelemetry(logging =>
+{
+    logging.IncludeFormattedMessage = true;
+    logging.IncludeScopes = true;
+});
+
+builder.Services.AddOpenTelemetry()
+    .WithMetrics(metrics =>
+    {
+        metrics.AddAspNetCoreInstrumentation()
+            .AddHttpClientInstrumentation();
+    })
+    .WithTracing(tracing =>
+    {
+        tracing.AddAspNetCoreInstrumentation()
+            .AddHttpClientInstrumentation();
+    })
+    .UseOtlpExporter();
+
 builder.Services.AddAkka("SampleSystem", (akkaBuilder, sp) =>
 {
+    akkaBuilder.ConfigureLoggers(setup =>
+    {
+        setup.ClearLoggers();
+        setup.AddLoggerFactory();
+    });
+
     var config = sp.GetRequiredService<IConfiguration>();
     var redisConn = config.GetConnectionString("akka-discovery");
     var serviceName = config["Akka:Cluster:ServiceName"];
