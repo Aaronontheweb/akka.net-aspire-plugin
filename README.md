@@ -145,3 +145,4 @@ Integration tests require Docker (they spin up a Redis container via Aspire).
 ## License
 
 Apache-2.0
+# Pinning Actions to SHAs
