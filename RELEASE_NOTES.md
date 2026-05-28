@@ -1,3 +1,14 @@
+#### 0.2.0 May 28 2026 ####
+
+**Security:**
+- Updated OpenTelemetry packages to 1.15.x — patches 4 known vulnerabilities (GHSA-g94r-2vxg-569j, GHSA-4625-4j76-fww9, GHSA-mr8r-92fq-pj8p, GHSA-q834-8qmm-v933)
+
+**Dependencies:**
+- .NET Aspire updated to 13.3.5
+- Akka.NET updated to 1.5.60
+- Akka.Hosting updated to 1.5.59 (with cluster bootstrap folded into core)
+- Akka.Cluster.Hosting updated to 1.5.59
+
 #### 0.1.0 February 6 2026 ####
 
 Initial release of Akka.NET Aspire hosting plugin packages:
