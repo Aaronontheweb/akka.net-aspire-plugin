@@ -1,3 +1,21 @@
+#### 0.3.0 June 2026 ####
+
+**Security:**
+- Updated Akka.NET packages to 1.5.68 — includes security fix for OpenTelemetry minimum version (GHSA-g94r-2vxg-569j)
+- Updated GitHub Actions: actions/checkout 7.0.1, actions/setup-dotnet 6.0.0
+- Updated .NET SDK to 10.0.302
+- Suppressed NuGet audit warnings for transitive dependencies pinned by upstream (OpenTelemetry.Api via Akka.Hosting, MessagePack via Aspire.StreamJsonRpc)
+
+**Dependencies:**
+- Akka.NET updated to 1.5.68
+- Akka.Hosting updated to 1.5.68
+- Akka.Cluster.Hosting updated to 1.5.68
+- Akka.Discovery updated to 1.5.68
+- Akka.Discovery.Azure updated to 1.5.68
+- Akka.Management updated to 1.5.68
+- Akka.Hosting.TestKit updated to 1.5.68
+- .NET SDK updated to 10.0.302
+
 #### 0.2.0 May 28 2026 ####
 
 **Security:**

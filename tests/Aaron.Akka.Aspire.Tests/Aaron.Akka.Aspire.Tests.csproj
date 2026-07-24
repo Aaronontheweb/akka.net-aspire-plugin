@@ -14,7 +14,7 @@
     <PackageReference Include="xunit.runner.visualstudio" />
     <PackageReference Include="FluentAssertions" />
     <PackageReference Include="Akka.TestKit.Xunit2" />
-    <PackageReference Include="Akka.Hosting.TestKit" />
+    <PackageReference Include="Akka.Hosting.TestKit.Xunit2" />
   </ItemGroup>
 
   <ItemGroup>
