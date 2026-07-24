@@ -1,4 +1,4 @@
-#### 0.3.0 June 2026 ####
+#### 0.2.1 July 24 2026 ####
 
 **Security:**
 - Updated Akka.NET packages to 1.5.68 — includes security fix for OpenTelemetry minimum version (GHSA-g94r-2vxg-569j)
@@ -13,7 +13,7 @@
 - Akka.Discovery updated to 1.5.68
 - Akka.Discovery.Azure updated to 1.5.68
 - Akka.Management updated to 1.5.68
-- Akka.Hosting.TestKit updated to 1.5.68
+- Akka.Hosting.TestKit updated to 1.5.68 (now using Akka.Hosting.TestKit.Xunit2 package)
 - .NET SDK updated to 10.0.302
 
 #### 0.2.0 May 28 2026 ####

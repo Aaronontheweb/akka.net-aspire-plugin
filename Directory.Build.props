@@ -7,16 +7,23 @@
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <VersionPrefix>0.2.0</VersionPrefix>
+    <VersionPrefix>0.2.1</VersionPrefix>
     <ImplicitUsings>enable</ImplicitUsings>
     <PackageReleaseNotes>**Security:**
-- Updated OpenTelemetry packages to 1.15.x — patches 4 known vulnerabilities (GHSA-g94r-2vxg-569j, GHSA-4625-4j76-fww9, GHSA-mr8r-92fq-pj8p, GHSA-q834-8qmm-v933)
+- Updated Akka.NET packages to 1.5.68 — includes security fix for OpenTelemetry minimum version (GHSA-g94r-2vxg-569j)
+- Updated GitHub Actions: actions/checkout 7.0.1, actions/setup-dotnet 6.0.0
+- Updated .NET SDK to 10.0.302
+- Suppressed NuGet audit warnings for transitive dependencies pinned by upstream (OpenTelemetry.Api via Akka.Hosting, MessagePack via Aspire.StreamJsonRpc)
 
 **Dependencies:**
-- .NET Aspire updated to 13.3.5
-- Akka.NET updated to 1.5.60
-- Akka.Hosting updated to 1.5.59 (with cluster bootstrap folded into core)
-- Akka.Cluster.Hosting updated to 1.5.59</PackageReleaseNotes>
+- Akka.NET updated to 1.5.68
+- Akka.Hosting updated to 1.5.68
+- Akka.Cluster.Hosting updated to 1.5.68
+- Akka.Discovery updated to 1.5.68
+- Akka.Discovery.Azure updated to 1.5.68
+- Akka.Management updated to 1.5.68
+- Akka.Hosting.TestKit updated to 1.5.68 (now using Akka.Hosting.TestKit.Xunit2 package)
+- .NET SDK updated to 10.0.302</PackageReleaseNotes>
   </PropertyGroup>
   <PropertyGroup>
     <NetStandardLibVersion>netstandard2.0</NetStandardLibVersion>
