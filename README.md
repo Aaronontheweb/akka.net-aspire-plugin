@@ -1,5 +1,7 @@
 # Akka.NET Aspire Plugin
 
+> **As of 8-19-2026, this repository is obsolete because this code has been transferred to the Akka.NET project and is now the official Aspire plugin here: [Akka.Management](https://github.com/akkadotnet/Akka.Management/). Please refer to that project for the official packages, source code, and support.**
+
 Automated Akka.NET cluster formation for [.NET Aspire](https://learn.microsoft.com/dotnet/aspire). Configure your cluster topology in the AppHost, and each service replica will automatically discover peers, form a cluster, and report health status.
 
 ## Packages
